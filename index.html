@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=utf-8>
+    <title>Flag - construção de geometria</title>
+    <style>
+        body { margin: 0; }
+        canvas { width: 100%; height: 100% }
+    </style>
+</head>
+<body>
+<script src="js/three.js"></script>
+<script src="js/OrbitControls.js"></script>
+
+<script type = "x-shader/x-vertex" id = "vertexShader">
+      varying vec4 v_color;
+      uniform vec2 resolution;
+      uniform vec3 color1b;
+      uniform vec3 color2b;
+      uniform vec3 color3b;
+      uniform vec3 color4b;
+      uniform vec3 color1a;
+      uniform vec3 color2a;
+      uniform vec3 color3a;
+      uniform vec3 color4a;
+      uniform float time;
+      void main()
+      {
+        vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * modelViewPosition;
+        vec2 pos = gl_Position.xy;
+        vec2 position = pos/resolution.xy;
+        int x = int(position.x);
+        int y = int(position.y);
+        if(x<0 && y<0) {
+            //v_color = vec4(1.0, 0, 0, 1.0);
+            v_color = time*vec4(color1a, 1.0) + (1.0-time)*vec4(color1b, 1.0);
+        }
+        else if(x<0 && y>0){
+            //v_color = vec4(0, 1.0, 0, 1.0);
+            v_color = time*vec4(color2a, 1.0) + (1.0-time)*vec4(color2b, 1.0);
+        }
+        else if(x>0 && y<0){
+            //v_color = vec4(0, 0, 1.0, 1.0);
+            v_color = time*vec4(color3a, 1.0) + (1.0-time)*vec4(color3b, 1.0);
+        }
+        else {
+            //v_color = vec4(0, 0, 0, 1.0);
+            v_color = time*vec4(color4a, 1.0) + (1.0-time)*vec4(color4b, 1.0);
+        }
+      }
+    </script>
+
+<script type = "x-shader/x-fragment" id = "fragment">
+      varying vec4 v_color;
+      void main() {
+    	  gl_FragColor = v_color;
+      }
+    </script>
+
+<script>
+
+    // Our Javascript will go here.
+
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+    var renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setClearColor(0x220000);
+    document.body.appendChild( renderer.domElement );
+
+    var legSide = 3.5;
+    var tableSide = 50;
+
+    var leg = new THREE.BoxGeometry(legSide, legSide, 100);
+    var materialLeg1 = new THREE.MeshBasicMaterial( {color: 0xffffff} );
+    var meshLeg1 = new THREE.Mesh(leg, materialLeg1);
+    var position = new THREE.Vector3((tableSide-legSide)/2, -(tableSide-legSide)/2, -30.01);
+    meshLeg1.position.copy(position);
+    scene.add(meshLeg1);
+    var materialLeg2 = new THREE.MeshBasicMaterial( {color: 0xffffff} );
+    var meshLeg2 = new THREE.Mesh(leg, materialLeg2);
+    var position = new THREE.Vector3(-(tableSide-legSide)/2, -(tableSide-legSide)/2, -30.01);
+    meshLeg2.position.copy(position);
+    scene.add(meshLeg2);
+    var materialLeg3 = new THREE.MeshBasicMaterial( {color: 0xffffff} );
+    var meshLeg3 = new THREE.Mesh(leg, materialLeg3);
+    var position = new THREE.Vector3((tableSide-legSide)/2, (tableSide-legSide)/2, -30.01);
+    meshLeg3.position.copy(position);
+    scene.add(meshLeg3);
+    var materialLeg4 = new THREE.MeshBasicMaterial( {color: 0xffffff} );
+    var meshLeg4 = new THREE.Mesh(leg, materialLeg4);
+    var position = new THREE.Vector3(-(tableSide-legSide)/2, (tableSide-legSide)/2, -30.01);
+    meshLeg4.position.copy(position);
+    scene.add(meshLeg4);
+
+    var geometry = new THREE.PlaneGeometry(tableSide, tableSide);
+    var material = new THREE.ShaderMaterial({
+        uniforms: {resolution:{value:new THREE.Vector2(1.0, 1.0)},
+            time:{value:0.0},
+            color1b:{value:new THREE.Vector3(1.0, 1.0, 1.0)},
+            color2b:{value:new THREE.Vector3(1.0, 1.0, 1.0)},
+            color3b:{value:new THREE.Vector3(1.0, 1.0, 1.0)},
+            color4b:{value:new THREE.Vector3(1.0, 1.0, 1.0)},
+            color1a:{value:new THREE.Vector3(1.0, 0, 0)},
+            color2a:{value:new THREE.Vector3(0, 1.0, 0)},
+            color3a:{value:new THREE.Vector3(0, 0, 1.0)},
+            color4a:{value:new THREE.Vector3(1.0, 1.0, 0)}},
+        vertexShader: document.getElementById("vertexShader").textContent,
+        fragmentShader: document.getElementById("fragment").textContent,
+    });
+    var mesh = new THREE.Mesh(geometry, material);
+    var position = new THREE.Vector3(0, 0, 20);
+    mesh.position.copy(position);
+    scene.add(mesh);
+
+    //var axesHelper = new THREE.AxesHelper( 5 );
+    //scene.add( axesHelper );
+
+    var light =  new THREE.PointLight( 0xffffff, 1.0 );
+    //light.position={ x: 2, y:1, z: 3};
+    light.position.set(4,4,2);
+
+
+    scene.add(light)
+    camera.position.x = 75;
+    camera.position.z = 70;
+    camera.position.y = 5;
+    camera.up = new THREE.Vector3(0,0,1);
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+    var controls = new THREE.OrbitControls( camera );
+
+    var x = Array(4);
+    var y = Array(4);
+    var z = Array(4);
+    var r = Array(4);
+    var g = Array(4);
+    var b = Array(4);
+
+    r = [1, 1, 1, 1];
+    g = [1, 1, 1, 1];
+    b = [1, 1, 1, 1];
+
+    x = [1, 0, 0, 1];
+    y = [0, 1, 0, 1];
+    z = [0, 0, 1, 0];
+
+
+    // Função de renderização
+    var delta = 0;
+    var t = 0;
+    function render() {
+        delta += 0.005;
+        t += 0.005;
+
+        //uniform
+        requestAnimationFrame(render);
+
+        controls.update();
+
+        renderer.render(scene, camera);
+
+        if(delta<=1) {
+            material.uniforms.time.value = delta;
+        }
+
+        if(t<=1) {
+            materialLeg1.color.setRGB(t*x[0]+(1.0-t)*r[0], t*y[0]+(1.0-t)*g[0], t*z[0]+(1.0-t)*b[0]);
+            materialLeg2.color.setRGB(t*x[1]+(1.0-t)*r[1], t*y[1]+(1.0-t)*g[1], t*z[1]+(1.0-t)*b[1]);
+            materialLeg3.color.setRGB(t*x[2]+(1.0-t)*r[2], t*y[2]+(1.0-t)*g[2], t*z[2]+(1.0-t)*b[2]);
+            materialLeg4.color.setRGB(t*x[3]+(1.0-t)*r[3], t*y[3]+(1.0-t)*g[3], t*z[3]+(1.0-t)*b[3]);
+        }
+
+        if(delta>2) {
+            material.uniforms.time.value = 0;
+            r[0] = x[0];
+            g[0] = y[0];
+            b[0] = z[0];
+            x[0] = Math.random();
+            y[0] = Math.random();
+            z[0] = Math.random();
+            material.uniforms.color1b.value = material.uniforms.color1a.value;
+            material.uniforms.color1a.value = new THREE.Vector3(x[0], y[0], z[0]);
+            r[1] = x[1];
+            g[1] = y[1];
+            b[1] = z[1];
+            x[1] = Math.random();
+            y[1] = Math.random();
+            z[1] = Math.random();
+            material.uniforms.color2b.value = material.uniforms.color2a.value;
+            material.uniforms.color2a.value = new THREE.Vector3(x[1], y[1], z[1]);
+            r[2] = x[2];
+            g[2] = y[2];
+            b[2] = z[2];
+            x[2] = Math.random();
+            y[2] = Math.random();
+            z[2] = Math.random();
+            material.uniforms.color3b.value = material.uniforms.color3a.value;
+            material.uniforms.color3a.value = new THREE.Vector3(x[2], y[2], z[2]);
+            r[3] = x[3];
+            g[3] = y[3];
+            b[3] = z[3];
+            x[3] = Math.random();
+            y[3] = Math.random();
+            z[3] = Math.random();
+            material.uniforms.color4b.value = material.uniforms.color4a.value;
+            material.uniforms.color4a.value = new THREE.Vector3(x[3], y[3], z[3]);
+            delta = 0;
+            t = 0;
+        }
+    }
+
+    // Loop de renderização
+    render();
+</script>
+</body>
+</html>
